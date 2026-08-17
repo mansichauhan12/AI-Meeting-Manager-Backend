@@ -24,4 +24,8 @@ urlpatterns = [
         "api/workspaces/",
         include("apps.workspace.urls")
     ),
+        path(
+        "api/meetings/",
+        include("apps.meetings.urls"),
+    ),
 ]

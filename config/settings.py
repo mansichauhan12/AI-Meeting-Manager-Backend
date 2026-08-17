@@ -42,6 +42,7 @@ INSTALLED_APPS = [
         "apps.accounts",
           "rest_framework_simplejwt.token_blacklist",
           "apps.workspace",
+              "apps.meetings",
 ]
 
 MIDDLEWARE = [
