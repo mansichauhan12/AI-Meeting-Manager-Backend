@@ -99,7 +99,7 @@ from .exceptions import (
     MeetingAccessDeniedException,
 )
 from .models import Meeting
-
+from .tasks import process_meeting
 
 class MeetingService:
 
@@ -179,11 +179,17 @@ class MeetingService:
             meeting_date=meeting_date,
             audio_file=audio_file,
             file_name=audio_file.name,
-            status=MeetingStatus.UPLOADED,
+            status=MeetingStatus.PROCESSING,
             created_by=user,
         )
 
+        transaction.on_commit(
+            lambda: process_meeting.delay(meeting.id)
+        )
+
         return meeting
+
+
 
     @staticmethod
     def delete_meeting(
