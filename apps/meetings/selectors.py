@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 
-from .models import Meeting
+from .models import Meeting, ActionItem
 
 
 class MeetingSelector:
@@ -54,6 +54,45 @@ class MeetingSelector:
                 id=meeting_id,
                 workspace__members__user=user,
                 workspace__members__status="ACTIVE",
+            )
+            .first()
+        )
+
+
+class ActionItemSelector:
+
+    @staticmethod
+    def get_action_items(
+        user,
+        workspace_id=None,
+    ) -> QuerySet:
+        queryset = (
+            ActionItem.objects
+            .select_related("meeting", "assigned_to")
+            .filter(
+                meeting__workspace__members__user=user,
+                meeting__workspace__members__status="ACTIVE",
+            )
+            .distinct()
+        )
+        if workspace_id:
+            queryset = queryset.filter(
+                meeting__workspace_id=workspace_id
+            )
+        return queryset
+
+    @staticmethod
+    def get_action_item(
+        user,
+        action_item_id,
+    ):
+        return (
+            ActionItem.objects
+            .select_related("meeting", "assigned_to", "meeting__workspace")
+            .filter(
+                id=action_item_id,
+                meeting__workspace__members__user=user,
+                meeting__workspace__members__status="ACTIVE",
             )
             .first()
         )

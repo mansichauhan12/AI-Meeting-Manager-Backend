@@ -7,13 +7,17 @@ from rest_framework.views import APIView
 from apps.workspace.models import Workspace
 
 from .exceptions import MeetingNotFoundException
+from .permissions import IsActionItemAuthorized
 from .serializers import (
     MeetingUploadSerializer,
     MeetingListSerializer,
     MeetingDetailSerializer,
+    ActionItemSerializer,
+    ActionItemCreateUpdateSerializer,
 )
-from .selectors import MeetingSelector
-from .services import MeetingService
+from .selectors import MeetingSelector, ActionItemSelector
+from .services.meeting_service import MeetingService
+from .services.action_item_service import ActionItemService
 
 class MeetingUploadAPIView(APIView):
 
@@ -160,6 +164,147 @@ class MeetingDetailAPIView(APIView):
             {
                 "success": True,
                 "message": "Meeting deleted successfully.",
+            },
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class ActionItemListCreateAPIView(APIView):
+
+    permission_classes = [
+        IsActionItemAuthorized,
+    ]
+
+    def get(self, request):
+        workspace_id = request.query_params.get("workspace")
+        action_items = ActionItemSelector.get_action_items(
+            user=request.user,
+            workspace_id=workspace_id,
+        )
+        serializer = ActionItemSerializer(action_items, many=True)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request):
+        serializer = ActionItemCreateUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        action_item = ActionItemService.create_action_item(
+            serializer.validated_data
+        )
+
+        response_serializer = ActionItemSerializer(action_item)
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class ActionItemDetailAPIView(APIView):
+
+    permission_classes = [
+        IsActionItemAuthorized,
+    ]
+
+    def get(self, request, pk):
+        action_item = ActionItemSelector.get_action_item(
+            user=request.user,
+            action_item_id=pk,
+        )
+        if not action_item:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        self.check_object_permissions(request, action_item)
+
+        serializer = ActionItemSerializer(action_item)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, pk):
+        action_item = ActionItemSelector.get_action_item(
+            user=request.user,
+            action_item_id=pk,
+        )
+        if not action_item:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, action_item)
+
+        serializer = ActionItemCreateUpdateSerializer(
+            action_item, data=request.data, partial=False
+        )
+        serializer.is_valid(raise_exception=True)
+
+        action_item = ActionItemService.update_action_item(
+            action_item, serializer.validated_data
+        )
+
+        response_serializer = ActionItemSerializer(action_item)
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(self, request, pk):
+        action_item = ActionItemSelector.get_action_item(
+            user=request.user,
+            action_item_id=pk,
+        )
+        if not action_item:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, action_item)
+
+        serializer = ActionItemCreateUpdateSerializer(
+            action_item, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+
+        action_item = ActionItemService.update_action_item(
+            action_item, serializer.validated_data
+        )
+
+        response_serializer = ActionItemSerializer(action_item)
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, pk):
+        action_item = ActionItemSelector.get_action_item(
+            user=request.user,
+            action_item_id=pk,
+        )
+        if not action_item:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, action_item)
+
+        ActionItemService.delete_action_item(action_item)
+        
+        return Response(
+            {
+                "success": True,
+                "message": "Action item deleted successfully.",
             },
             status=status.HTTP_204_NO_CONTENT,
         )

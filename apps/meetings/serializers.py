@@ -66,6 +66,25 @@ class ActionItemSerializer(
         )
 
 
+class ActionItemCreateUpdateSerializer(
+    serializers.ModelSerializer
+):
+
+    class Meta:
+
+        model = ActionItem
+
+        fields = (
+            "meeting",
+            "title",
+            "description",
+            "assigned_to",
+            "deadline",
+            "priority",
+            "status",
+        )
+
+
 class MeetingListSerializer(
     serializers.ModelSerializer
 ):
