@@ -7,17 +7,20 @@ from rest_framework.views import APIView
 from apps.workspace.models import Workspace
 
 from .exceptions import MeetingNotFoundException
-from .permissions import IsActionItemAuthorized
+from .permissions import IsActionItemAuthorized, IsReminderAuthorized
 from .serializers import (
     MeetingUploadSerializer,
     MeetingListSerializer,
     MeetingDetailSerializer,
     ActionItemSerializer,
     ActionItemCreateUpdateSerializer,
+    ReminderSerializer,
+    ReminderCreateUpdateSerializer,
 )
-from .selectors import MeetingSelector, ActionItemSelector
+from .selectors import MeetingSelector, ActionItemSelector, ReminderSelector
 from .services.meeting_service import MeetingService
 from .services.action_item_service import ActionItemService
+from .services.reminder_service import ReminderService
 
 class MeetingUploadAPIView(APIView):
 
@@ -305,6 +308,147 @@ class ActionItemDetailAPIView(APIView):
             {
                 "success": True,
                 "message": "Action item deleted successfully.",
+            },
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
+
+class ReminderListCreateAPIView(APIView):
+
+    permission_classes = [
+        IsReminderAuthorized,
+    ]
+
+    def get(self, request):
+        workspace_id = request.query_params.get("workspace")
+        reminders = ReminderSelector.get_reminders(
+            user=request.user,
+            workspace_id=workspace_id,
+        )
+        serializer = ReminderSerializer(reminders, many=True)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request):
+        serializer = ReminderCreateUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        reminder = ReminderService.create_reminder(
+            serializer.validated_data
+        )
+
+        response_serializer = ReminderSerializer(reminder)
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class ReminderDetailAPIView(APIView):
+
+    permission_classes = [
+        IsReminderAuthorized,
+    ]
+
+    def get(self, request, pk):
+        reminder = ReminderSelector.get_reminder(
+            user=request.user,
+            reminder_id=pk,
+        )
+        if not reminder:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        self.check_object_permissions(request, reminder)
+
+        serializer = ReminderSerializer(reminder)
+        return Response(
+            {
+                "success": True,
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, pk):
+        reminder = ReminderSelector.get_reminder(
+            user=request.user,
+            reminder_id=pk,
+        )
+        if not reminder:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, reminder)
+
+        serializer = ReminderCreateUpdateSerializer(
+            reminder, data=request.data, partial=False
+        )
+        serializer.is_valid(raise_exception=True)
+
+        reminder = ReminderService.update_reminder(
+            reminder, serializer.validated_data
+        )
+
+        response_serializer = ReminderSerializer(reminder)
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def patch(self, request, pk):
+        reminder = ReminderSelector.get_reminder(
+            user=request.user,
+            reminder_id=pk,
+        )
+        if not reminder:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, reminder)
+
+        serializer = ReminderCreateUpdateSerializer(
+            reminder, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+
+        reminder = ReminderService.update_reminder(
+            reminder, serializer.validated_data
+        )
+
+        response_serializer = ReminderSerializer(reminder)
+        return Response(
+            {
+                "success": True,
+                "data": response_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, pk):
+        reminder = ReminderSelector.get_reminder(
+            user=request.user,
+            reminder_id=pk,
+        )
+        if not reminder:
+            return Response({"success": False, "message": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, reminder)
+
+        ReminderService.delete_reminder(reminder)
+        
+        return Response(
+            {
+                "success": True,
+                "message": "Reminder deleted successfully.",
             },
             status=status.HTTP_204_NO_CONTENT,
         )

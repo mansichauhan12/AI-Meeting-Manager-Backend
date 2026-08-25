@@ -106,3 +106,54 @@ class IsActionItemAuthorized(BasePermission):
             return is_admin_or_owner
 
         return False
+
+
+class IsReminderAuthorized(BasePermission):
+    """
+    Permission for Reminders:
+    - Must be authenticated
+    - Read: Workspace Member
+    - Update/Delete: Assigned User OR Admin/Owner
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if request.method == "POST":
+            task_id = request.data.get("task")
+            if not task_id:
+                return True
+
+            from apps.meetings.models import ActionItem
+            try:
+                task = ActionItem.objects.get(id=task_id)
+            except ActionItem.DoesNotExist:
+                return True
+
+            return WorkspaceMember.objects.filter(
+                workspace=task.meeting.workspace,
+                user=request.user,
+                status="ACTIVE",
+            ).exists()
+
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        workspace = obj.task.meeting.workspace
+        member = WorkspaceMember.objects.filter(
+            workspace=workspace, user=request.user, status="ACTIVE"
+        ).first()
+
+        if not member:
+            return False
+
+        if request.method in ["GET", "HEAD", "OPTIONS"]:
+            return True
+
+        is_admin_or_owner = member.role in ["ADMIN", "OWNER"]
+
+        if request.method in ["PUT", "PATCH", "DELETE"]:
+            return is_admin_or_owner or (obj.task.assigned_to == request.user)
+
+        return False

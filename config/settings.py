@@ -181,4 +181,13 @@ CELERY_RESULT_SERIALIZER = "json"
 
 CELERY_TIMEZONE = "Asia/Kolkata"
 
+CELERY_BEAT_SCHEDULE = {
+    "check-pending-reminders-every-minute": {
+        "task": "apps.meetings.tasks.check_pending_reminders",
+        "schedule": 60.0,
+    },
+}
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")

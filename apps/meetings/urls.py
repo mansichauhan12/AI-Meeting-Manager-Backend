@@ -6,6 +6,8 @@ from .views import (
     MeetingDetailAPIView,
     ActionItemListCreateAPIView,
     ActionItemDetailAPIView,
+    ReminderListCreateAPIView,
+    ReminderDetailAPIView,
 )
 
 
@@ -39,6 +41,18 @@ urlpatterns = [
         "action-items/<int:pk>/",
         ActionItemDetailAPIView.as_view(),
         name="action-item-detail",
+    ),
+
+    path(
+        "reminders/",
+        ReminderListCreateAPIView.as_view(),
+        name="reminder-list",
+    ),
+
+    path(
+        "reminders/<int:pk>/",
+        ReminderDetailAPIView.as_view(),
+        name="reminder-detail",
     ),
 
 ]

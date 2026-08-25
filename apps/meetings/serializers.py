@@ -3,7 +3,9 @@ from rest_framework import serializers
 from .models import (
     Meeting,
     ActionItem,
+    Reminder,
 )
+from django.utils import timezone
 
 
 class MeetingUploadSerializer(
@@ -151,3 +153,43 @@ class MeetingDetailSerializer(
             "created_at",
             "updated_at",
         )
+
+
+class ReminderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reminder
+        fields = (
+            "id",
+            "task",
+            "send_at",
+            "status",
+            "created_at",
+        )
+
+
+class ReminderCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reminder
+        fields = (
+            "task",
+            "send_at",
+            "status",
+        )
+        read_only_fields = ("status",)
+
+    def validate(self, data):
+        send_at = data.get("send_at")
+        task = data.get("task")
+        
+        # If updating, task might not be in data if it's partial, so get from instance
+        if not task and self.instance:
+            task = self.instance.task
+
+        if send_at:
+            if send_at <= timezone.now():
+                raise serializers.ValidationError({"send_at": "Reminder time must be in the future."})
+            
+            if task and task.deadline and send_at > task.deadline:
+                raise serializers.ValidationError({"send_at": "Reminder time must be before the task deadline."})
+                
+        return data

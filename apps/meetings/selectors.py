@@ -1,6 +1,6 @@
 from django.db.models import QuerySet
 
-from .models import Meeting, ActionItem
+from .models import Meeting, ActionItem, Reminder
 
 
 class MeetingSelector:
@@ -93,6 +93,45 @@ class ActionItemSelector:
                 id=action_item_id,
                 meeting__workspace__members__user=user,
                 meeting__workspace__members__status="ACTIVE",
+            )
+            .first()
+        )
+
+
+class ReminderSelector:
+
+    @staticmethod
+    def get_reminders(
+        user,
+        workspace_id=None,
+    ) -> QuerySet:
+        queryset = (
+            Reminder.objects
+            .select_related("task", "task__meeting", "task__meeting__workspace")
+            .filter(
+                task__meeting__workspace__members__user=user,
+                task__meeting__workspace__members__status="ACTIVE",
+            )
+            .distinct()
+        )
+        if workspace_id:
+            queryset = queryset.filter(
+                task__meeting__workspace_id=workspace_id
+            )
+        return queryset
+
+    @staticmethod
+    def get_reminder(
+        user,
+        reminder_id,
+    ):
+        return (
+            Reminder.objects
+            .select_related("task", "task__meeting", "task__meeting__workspace")
+            .filter(
+                id=reminder_id,
+                task__meeting__workspace__members__user=user,
+                task__meeting__workspace__members__status="ACTIVE",
             )
             .first()
         )
