@@ -164,7 +164,23 @@ def process_meeting(self, meeting_id):
         )
 
         # --------------------------------
-        # STEP 4: COMPLETED
+        # STEP 4: CHUNKING & EMBEDDINGS
+        # --------------------------------
+
+        from apps.ai.services.chunking_service import ChunkingService
+        from apps.ai.services.vector_store_service import VectorStoreService
+
+        chunks = ChunkingService.chunk_text(transcript)
+        if chunks:
+            vector_store = VectorStoreService()
+            vector_store.add_chunks(
+                workspace_id=meeting.workspace.id,
+                meeting_id=meeting.id,
+                chunks=chunks
+            )
+
+        # --------------------------------
+        # STEP 5: COMPLETED
         # --------------------------------
 
         meeting.status = MeetingStatus.COMPLETED

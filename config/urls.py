@@ -28,4 +28,8 @@ urlpatterns = [
         "api/meetings/",
         include("apps.meetings.urls"),
     ),
+    path(
+        "api/search/",
+        include("apps.search.urls"),
+    ),
 ]
