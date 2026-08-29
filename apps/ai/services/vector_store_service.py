@@ -38,8 +38,10 @@ class VectorStoreService:
             documents=chunks
         )
 
-    def search_chunks(self, workspace_id: int, query: str, top_k: int = 5) -> list[dict]:
-        query_embedding = EmbeddingService.get_embedding(query)
+# In apps/ai/services/vector_store_service.py
+
+    def search_chunks(self, workspace_id: int, query: str, top_k: int = 5, distance_threshold: float = 0.8) -> list[dict]:
+        query_embedding = EmbeddingService.get_embedding(query.lower())
         
         results = self.collection.query(
             query_embeddings=[query_embedding],
@@ -50,10 +52,16 @@ class VectorStoreService:
         parsed_results = []
         if results and results.get('documents') and results['documents'][0]:
             for i in range(len(results['documents'][0])):
+                distance = results['distances'][0][i] if 'distances' in results and results['distances'] else None
+                
+                # Filter out chunks that exceed our maximum distance threshold
+                if distance is not None and distance > distance_threshold:
+                    continue
+                    
                 parsed_results.append({
                     "text": results['documents'][0][i],
                     "metadata": results['metadatas'][0][i],
-                    "score": results['distances'][0][i] if 'distances' in results and results['distances'] else None
+                    "score": distance
                 })
                 
         return parsed_results

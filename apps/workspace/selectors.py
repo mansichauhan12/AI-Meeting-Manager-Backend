@@ -47,18 +47,6 @@ class WorkspaceSelector:
 
         )
 
-class WorkspaceMemberSelector:
-
-    @staticmethod
-    def members(workspace):
-
-        return WorkspaceMember.objects.filter(
-
-            workspace=workspace,
-
-            status=WorkspaceMemberStatus.ACTIVE
-
-        ).select_related("user")
 
 
 class WorkspaceMemberSelector:
@@ -70,7 +58,7 @@ class WorkspaceMemberSelector:
 
             workspace=workspace,
 
-            status=WorkspaceMemberStatus.ACTIVE
+            status__in=[WorkspaceMemberStatus.ACTIVE, WorkspaceMemberStatus.INVITED]
 
         ).select_related(
             "user"

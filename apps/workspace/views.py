@@ -82,14 +82,17 @@ class WorkspaceListCreateAPIView(ListCreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
+from .permissions import IsWorkspaceOwner, IsWorkspaceMember
+
+
 class WorkspaceDetailAPIView(RetrieveUpdateDestroyAPIView):
 
-    permission_classes = [
-        IsAuthenticated,
-        IsWorkspaceOwner
-    ]
-
     serializer_class = WorkspaceSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated(), IsWorkspaceMember()]
+        return [IsAuthenticated(), IsWorkspaceOwner()]
 
     def get_object(self):
 

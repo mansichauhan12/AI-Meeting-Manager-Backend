@@ -29,3 +29,17 @@ class IsWorkspaceAdmin(BasePermission):
             obj,
             request.user
         )
+
+
+class IsWorkspaceMember(BasePermission):
+
+    def has_object_permission(
+        self,
+        request,
+        view,
+        obj,
+    ):
+        return WorkspaceAccessService.is_member(
+            obj,
+            request.user
+        )

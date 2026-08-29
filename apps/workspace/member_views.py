@@ -93,6 +93,14 @@ class WorkspaceMemberRoleAPIView(APIView):
     def patch(self, request, pk):
 
         member = WorkspaceMemberSelector.member(pk)
+        
+        # Security check: must be admin to change roles
+        if not WorkspaceAccessService.is_admin(member.workspace, request.user):
+            return Response({"message": "Permission denied"}, status=403)
+            
+        # Security check: cannot change owner's role
+        if member.role == "OWNER":
+            return Response({"message": "Cannot change owner's role"}, status=403)
 
         serializer = UpdateMemberRoleSerializer(
             data=request.data
@@ -118,12 +126,20 @@ class WorkspaceMemberRoleAPIView(APIView):
 
     def delete(self, request, pk):
 
-     member = WorkspaceMemberSelector.member(pk)
+        member = WorkspaceMemberSelector.member(pk)
+        
+        # Security check: must be admin to remove members
+        if not WorkspaceAccessService.is_admin(member.workspace, request.user):
+            return Response({"message": "Permission denied"}, status=403)
+            
+        # Security check: cannot remove owner
+        if member.role == "OWNER":
+            return Response({"message": "Cannot remove the owner"}, status=403)
 
-     WorkspaceMemberService.remove_member(
-        member
-     )
+        WorkspaceMemberService.remove_member(
+            member
+        )
 
-     return Response({
-         "message": "Member Removed"
+        return Response({
+            "message": "Member Removed"
         })
