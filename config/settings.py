@@ -49,6 +49,7 @@ INSTALLED_APPS = [
               "apps.meetings",
               "apps.ai",
               "apps.search",
+              "apps.dashboard",
 ]
 
 MIDDLEWARE = [
@@ -193,3 +194,10 @@ CELERY_BEAT_SCHEDULE = {
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/2",
+    }
+}
