@@ -30,7 +30,11 @@ SECRET_KEY = 'django-insecure-doox@5w!al9^8y#h=_z)^(d5ie4&&&+_@me@y(_a$vy7&25lp&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "backend.aimeeting.craftnode.tech",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
@@ -133,14 +137,12 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -212,3 +214,11 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379/2",
     }
 }
+
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://backend.aimeeting.craftnode.tech",
+]
